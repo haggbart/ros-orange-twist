@@ -17,16 +17,12 @@ SUBSCRIBER = "/test_msg"
 JOINT_NAMES = ['elbow_joint', 'shoulder_lift_joint', 'shoulder_pan_joint',
                'wrist_1_joint', 'wrist_2_joint', 'wrist_3_joint']
 
-
 # dont edit below pls
 NSECS = SECONDS_PER_MOVE % 1 * 10000000000
 SECS = int(SECONDS_PER_MOVE)
 
-print("secs: " + str(SECS))
-print("nsecs: " + str(NSECS))
 
-
-def get_msg(rotation):
+def get_publisher_msg(rotation):
     msg = JointTrajectory()
     msg.header.stamp = rospy.Time.now()
     msg.joint_names = JOINT_NAMES
@@ -38,16 +34,22 @@ def get_msg(rotation):
     return msg
 
 
-def callback_rotation(msg):
-    rotation_value = msg.angular.z
-    msg = get_msg(rotation_value)
-    pub.publish(msg)
-    rospy.loginfo("published rotation: " + str(rotation_value))
+class Spinner:
+    def __init__(self):
+        self.rotation = 0.0
+        self.last_msg_time = rospy.get_time()
+        self.pub = rospy.Publisher(PUBLISHER, JointTrajectory, queue_size=1)
+        self.sub = rospy.Subscriber(SUBSCRIBER, Twist, self.callback_rotation)
+
+    def callback_rotation(self, msg):
+        self.last_msg_time = rospy.get_time()
+        self.rotation = msg.angular.z
+        publisher_msg = get_publisher_msg(msg.angular.z)
+        self.pub.publish(publisher_msg)
 
 
 if __name__ == '__main__':
     rospy.init_node(NODE_NAME)
-    pub = rospy.Publisher(PUBLISHER, JointTrajectory, queue_size=1)
-    sub = rospy.Subscriber(SUBSCRIBER, Twist, callback_rotation)
+    Spinner()
     rospy.loginfo("Initialized.")
     rospy.spin()
