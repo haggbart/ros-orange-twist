@@ -36,16 +36,12 @@ def get_publisher_msg(rotation):
 
 class Spinner:
     def __init__(self):
-        self.rotation = 0.0
-        self.last_msg_time = rospy.get_time()
         self.pub = rospy.Publisher(PUBLISHER, JointTrajectory, queue_size=1)
         self.sub = rospy.Subscriber(SUBSCRIBER, Twist, self.callback_rotation)
 
     def callback_rotation(self, msg):
-        self.last_msg_time = rospy.get_time()
-        self.rotation = msg.angular.z
-        publisher_msg = get_publisher_msg(msg.angular.z)
-        self.pub.publish(publisher_msg)
+        msg = get_publisher_msg(msg.angular.z)
+        self.pub.publish(msg)
 
 
 if __name__ == '__main__':
